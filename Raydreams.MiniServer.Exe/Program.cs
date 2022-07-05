@@ -24,7 +24,7 @@ namespace Raydreams.MiniServer
             MoreServer server = new MoreServer( 50001, Path.Combine( ServerPath, ServerFolder ) )
             { ConvertMarkdown = new Markdigdowner().GetHtml };
 
-            // obviously have to block on server or the app just shutsdown for now
+            // explicit start of the server and block
             await server.Serve();
 
             return 0;

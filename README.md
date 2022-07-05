@@ -1,16 +1,19 @@
 # C# Mini Web Server
 
-Make your own little C# .NET Core web server. This is academic and just for fun but you could use it to return files of **any** type back to you from a server, like say your own little encrypted server. It only supports a single web site hosted in some local folder. However, it's really meant to intercept custom routes like an OAuth Callback.
+Make your own little C# .NET Core web server. This is useful when you need to spawn an in-app server to listen to redirects on localhost.
 
-This is useful when you need to spawn an in-app server to listen to redirects on localhost.
+The primary use cases are:
+
+* intercepting redirects from an OAuth Callback
+* serving your own custom files like custom encrypted files
+
+It only supports a single web site hosted in some local folder.
 
 You can subclass it to add custom route handlers for specific callback URLs as shown in this example.
 
-For now it only handles custom routes, HTML files, CSS, and basic images.
+For now it only handles custom routes, HTML files, CSS, JSON, and basic images.
 
 You can add in Markdown support (demo included) to serve Markdown as HTML using something like **Markdig**.
-
-I'll add JavaScript support soon.
 
 ## nuget
 
@@ -77,5 +80,7 @@ Add an event to your own subclass your main code will listen to.
 ## Not Implemented
 
 * HTTPS - there's no support for HTTPS.
-* Javascript - .js files are not supported
-* Multiple Request - Only one request can be handled at a time. Other incoming requests are blocked until processing requests are complete.
+* Javascript - .js files are not YET supported
+* Multiple Requests - Only one request can be handled at a time. Other incoming requests are blocked until processing requests are complete.
+* Binding to custom domains.
+* Logging - better logger interface coming soon.

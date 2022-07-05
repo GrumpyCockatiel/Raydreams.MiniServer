@@ -13,7 +13,7 @@ namespace Raydreams.MiniServer
     public class MiniServer
     {
         /// <summary></summary>
-        public static readonly string ServerName = "MiniServer";
+        public static readonly string ServerName = "Raydreams MiniServer";
 
         /// <summary>Default page to return when no file is specified on the root path</summary>
         public static readonly string HomePage = "index.html";
@@ -82,12 +82,33 @@ namespace Raydreams.MiniServer
 
         #endregion [ Properties ]
 
-        #region [ Methods ]
+        #region [ Public Methods ]
 
         /// <summary>Explicit call to shutdown</summary>
         public void Shutdown()
         {
             this._shutdown = true;
+        }
+
+        /// <summary>Allows for adding a new special route at run time</summary>
+        /// <param name="route">The custom route which optionally is prefxied with forward slash. Routes need to be case insensitive.</param>
+        /// <param name="callback">The callback function when this route is called</param>
+        public bool AddSpecialRoute( string route, Action<HttpListenerContext> callback )
+        {
+            if ( String.IsNullOrWhiteSpace( route ) || callback == null )
+                return false;
+
+            route = route.Trim().ToLowerInvariant();
+
+            if ( route[0] != '/' )
+                route = $"/{route}";
+
+            if ( this.SpecialRoutes.ContainsKey( route ) )
+                return false;
+
+            this.SpecialRoutes.Add( route, callback );
+
+            return true;
         }
 
         /// <summary>Start serving files</summary>
@@ -113,20 +134,23 @@ namespace Raydreams.MiniServer
                 // block for a new request
                 HttpListenerContext context = await server.GetContextAsync();
 
+                // special route paths have to be case insensitive
+                string specialRoute = context.Request.Url.LocalPath?.ToLowerInvariant();
+
                 try
                 {
                     // always check shutdown first - nothing can override it
-                    if ( context.Request.Url.LocalPath == "/shutdown" )
+                    if ( specialRoute == "/shutdown" )
                     {
                         this.LogIt( $"Received shutdown command... Shutting down..." );
                         this.Shutdown();
                         continue;
                     }
                     // test for special routes next
-                    else if ( this.SpecialRoutes.ContainsKey( context.Request.Url.LocalPath ) )
+                    else if ( this.SpecialRoutes.ContainsKey( specialRoute ) )
                     {
-                        this.LogIt( $"Request for special route {context.Request.Url.LocalPath}" );
-                        this.SpecialRoutes[context.Request.Url.LocalPath]( context );
+                        this.LogIt( $"Request for special route {specialRoute}" );
+                        this.SpecialRoutes[specialRoute]( context );
                         continue;
                     }
                     // finally serve a physical HTML page
@@ -157,6 +181,10 @@ namespace Raydreams.MiniServer
             // normal shutdown
             return 0;
         }
+
+        #endregion [ Public Methods ]
+
+        #region [ Methods ]
 
         /// <summary>Test the response with a request in the format /test?echo=some test message</summary>
         /// <param name="response"></param>
@@ -260,10 +288,11 @@ namespace Raydreams.MiniServer
         /// <param name="message"></param>
         protected void ServeSimpleHTML( HttpListenerResponse response, string body )
         {
-            string msg = FormatHTMLPage( body );
+            string msg = FormatHTMLPage( body, ServerName );
             byte[] msgBytes = UTF8Encoding.UTF8.GetBytes( msg );
 
             response.StatusCode = 200;
+            response.KeepAlive = false;
             response.ContentLength64 = msgBytes.Length;
             response.OutputStream.Write( msgBytes, 0, msgBytes.Length );
 
@@ -289,6 +318,7 @@ namespace Raydreams.MiniServer
             }
 
             byte[] msgBytes = UTF8Encoding.UTF8.GetBytes( msg );
+            response.KeepAlive = false;
             response.ContentLength64 = msgBytes.Length;
             response.OutputStream.Write( msgBytes, 0, msgBytes.Length );
             response.ContentType = "application/json; charset=utf-8";
@@ -300,6 +330,7 @@ namespace Raydreams.MiniServer
         protected void ServeError( HttpListenerResponse response, int errorCode )
         {
             response.StatusCode = errorCode;
+            response.KeepAlive = false;
             response.ContentLength64 = 0;
             response.Close();
         }
@@ -321,10 +352,10 @@ namespace Raydreams.MiniServer
         }
 
         /// <summary>Gets the version of THIS assembly</summary>
-        /// <returns></returns>
+        /// <returns>The vesion as a string</returns>
         public static string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-        /// <summary>Add a logger here later</summary>
+        /// <summary>Add a log event here later</summary>
         /// <param name="msg"></param>
         protected virtual void LogIt( string msg )
         {
