@@ -12,6 +12,10 @@ You can add in Markdown support (demo included) to serve Markdown as HTML using 
 
 I'll add JavaScript support soon.
 
+## nuget
+
+You can download the [nuget package](https://www.nuget.org/packages/raydreams.miniserver/) from nuget.org
+
 ## HOW TO
 
 It's best to first subclass Mini Server

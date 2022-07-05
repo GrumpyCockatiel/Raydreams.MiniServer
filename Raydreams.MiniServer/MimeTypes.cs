@@ -68,6 +68,7 @@ namespace Raydreams.MiniServer
                 {".css", "text/css"},
                 {".md", "text/html"}, // markdown files are converted to HTML
                 {".markdown", "text/html"}, // markdown files are converted to HTML
+                {".json", "text/json"},
                 {".png", "image/png" },
                 {".gif", "image/gif" },
                 {".jpg", "image/jpg" },
