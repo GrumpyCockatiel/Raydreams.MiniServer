@@ -5,40 +5,33 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace Raydreams.MiniServer
 {
-    /// <summary>Delegate Function for converting Markdown to HTML</summary>
-    /// <param name="md">The markdown to convert</param>
-    /// <returns>Converted HTML</returns>
-    public delegate string MarkdownToHTML( string md );
-
     /// <summary>Portable mini web server</summary>
     public class MiniServer
     {
-        public const string HTMLType = "text/html; charset=utf-8";
+        /// <summary></summary>
+        public static readonly string ServerName = "MiniServer";
 
-        public const string PNGType = "image/png";
-
-        public const string JPEGType = "image/jpg";
-
-        public const string GIFType = "image/gif";
-
-        public const string CSSType = "text/css";
-
-        /// <summary>only valid extensions that can be served except .ico</summary>
-        public static readonly string[] Extensions = new string[] { ".htm", ".html", ".css", ".md", ".markdown", ".png", ".gif", ".jpg", ".jpeg" };
-
-        /// <summary>Default page to return</summary>
+        /// <summary>Default page to return when no file is specified on the root path</summary>
         public static readonly string HomePage = "index.html";
 
+        /// <summary>The charset defaults to UTF-8</summary>
+        public static readonly string DefaultCharSet = "charset=utf-8";
+
+        /// <summary>Serves as a very simple HTML template with only Title and Body replacement tokens</summary>
+        public static readonly string SimpleHTMLTemplate = @"<!DOCTYPE html><html lang=""en""><head><meta charset=""utf-8"" /><title>$TITLE$</title></head><body></body>$BODY$</html>";
+
+        /// <summary>When flipped to true, this server will end</summary>
         private bool _shutdown = false;
 
         #region [ Constructors ]
 
         /// <summary>Constructor</summary>
         /// <param name="port">Port to run on</param>
-        /// <param name="rootPath">Path to the root of the physical web folder to server files from</param>
+        /// <param name="wwwRoot">Path to the root of the physical web folder to server files from</param>
         public MiniServer( int port, string wwwRoot )
         {
             if ( String.IsNullOrWhiteSpace( wwwRoot ) )
@@ -50,10 +43,15 @@ namespace Raydreams.MiniServer
             this.Port = Math.Clamp(port, 1024, 65535 );
 
             // built in special routes
-            this.SpecialRoutes = new Dictionary<string, RouteHandler>()
+            this.SpecialRoutes = new Dictionary<string, Action<HttpListenerContext>>()
             {
+                // signature of the server
                 { "/sig", this.ServeSignature },
+
+                // a test page uses the format /test?echo=message
                 { "/test", this.ServeTest },
+
+                // get any favicon since many clients will search for it
                 { "/favicon.ico", this.ServeFavicon }
             };
         }
@@ -62,8 +60,8 @@ namespace Raydreams.MiniServer
 
         #region [ Properties ]
 
-        /// <summary>Delegate method to handle custom routes</summary>
-        public delegate void RouteHandler( HttpListenerContext context );
+        /// <summary>Collection of custom routes</summary>
+        protected Dictionary<string, Action<HttpListenerContext>> SpecialRoutes;
 
         /// <summary>The physical root web server file path</summary>
         public DirectoryInfo RootFolder { get; set; }
@@ -74,14 +72,13 @@ namespace Raydreams.MiniServer
         /// <summary>port to listen on</summary>
         public int Port { get; set; } = 50005;
 
-        /// <summary>Collection of custom routes</summary>
-        protected Dictionary<string, RouteHandler> SpecialRoutes;
-
         /// <summary>Is the server still running</summary>
         public bool IsRunning => !this._shutdown;
 
-        /// <summary>The Markdown Pipeline</summary>
-        public MarkdownToHTML ConvertMarkdown { get; set; } = ( string md ) => "<h1>Markdown not supported!</h1>";
+        /// <summary>Delegate Function for converting Markdown to HTML. Input string is markdown and return is HTML.</summary>
+        /// <returns>Converted HTML</returns>
+        /// <remarks>Supply your own Markdown conversion routine</remarks>
+        public Func<string, string> ConvertMarkdown { get; set; } = ( string md ) => "<h1>Markdown not supported!</h1>";
 
         #endregion [ Properties ]
 
@@ -101,7 +98,7 @@ namespace Raydreams.MiniServer
                 return -1;
 
             // setup server and listen on the following ports
-            HttpListener server = new HttpListener();
+            HttpListener server = new();
             server.Prefixes.Add( $"http://localhost:{Port}/" );
             server.Prefixes.Add( $"http://{IPAddress.Loopback}:{Port}/" );
             
@@ -125,14 +122,14 @@ namespace Raydreams.MiniServer
                         this.Shutdown();
                         continue;
                     }
-                    // test for special routes
+                    // test for special routes next
                     else if ( this.SpecialRoutes.ContainsKey( context.Request.Url.LocalPath ) )
                     {
                         this.LogIt( $"Request for special route {context.Request.Url.LocalPath}" );
                         this.SpecialRoutes[context.Request.Url.LocalPath]( context );
                         continue;
                     }
-                    // serve a physical HTML page
+                    // finally serve a physical HTML page
                     else if ( this.EnablePageServe )
                     {
                         // test the local path is the home path
@@ -178,10 +175,10 @@ namespace Raydreams.MiniServer
         /// <param name="localPath"></param>
         protected void ServeSignature( HttpListenerContext ctx )
         {
-            this.ServeSimpleHTML( ctx.Response, $"Raydreams Server {DateTimeOffset.UtcNow}" );
+            this.ServeSimpleHTML( ctx.Response, $"{ServerName} {GetVersion()} {DateTimeOffset.UtcNow}" );
         }
 
-        /// <summary>Respond with the server signature</summary>
+        /// <summary>Respond with the favicon in the root of the web folder</summary>
         /// <param name="response"></param>
         /// <param name="localPath"></param>
         protected void ServeFavicon( HttpListenerContext ctx )
@@ -198,7 +195,7 @@ namespace Raydreams.MiniServer
             }
 
             response.StatusCode = 200;
-            response.ContentType = "image/x-icon";
+            response.ContentType = MimeTypeMap.GetMimeType(".ico");
             response.ContentLength64 = ico.Length;
             response.OutputStream.Write( ico, 0, ico.Length );
             response.Close();
@@ -209,10 +206,10 @@ namespace Raydreams.MiniServer
         protected void ServeWebFile( HttpListenerResponse response, string localPath )
         {
             // get File Path Info
-            FileInfo fi = new FileInfo( localPath );
+            FileInfo fi = new ( localPath );
 
             // validate or return 404
-            if ( !fi.Exists || !Extensions.Contains( fi.Extension ) )
+            if ( !fi.Exists || !MimeTypeMap.Supported( fi.Extension ) )
             {
                 this.LogIt( $"File {fi.Name} not found" );
                 this.ServeError(response, 404);
@@ -230,7 +227,7 @@ namespace Raydreams.MiniServer
                 string md = File.ReadAllText( fi.FullName );
                 string body = this.ConvertMarkdown( md );
 
-                buffer = UTF8Encoding.UTF8.GetBytes( $"<!DOCTYPE html><html><head></head><body>{body}</body></html>" );
+                buffer = UTF8Encoding.UTF8.GetBytes( FormatHTMLPage( body, Path.GetFileNameWithoutExtension( fi.Name ) ) );
             }
             else
             {
@@ -245,37 +242,28 @@ namespace Raydreams.MiniServer
             // create a response stream
             using Stream outStream = response.OutputStream;
             outStream.Write( buffer, 0, buffer.Length );
+            response.KeepAlive = false;
 
             // set the content type which we will assume for now is UTF-8 text encoding but should check the HTML file
             response.StatusCode = 200;
 
-            // set the response type - replace with the MIME type mapper
-            if ( fi.Extension == ".html" || fi.Extension == ".htm" )
-                response.ContentType = HTMLType;
-            else if ( fi.Extension == ".css" )
-                response.ContentType = CSSType;
-            else if ( fi.Extension == ".jpeg" || fi.Extension == ".jpg" )
-                response.ContentType = JPEGType;
-            else if ( fi.Extension == ".png" )
-                response.ContentType = PNGType;
-            else if ( fi.Extension == ".gif" )
-                response.ContentType = GIFType;
+            // set the response type - text types need the charset
+            string mimeType = MimeTypeMap.GetMimeType( fi.Extension );
+            response.ContentType = MimeTypeMap.IsText( mimeType ) ? $"{mimeType}; {DefaultCharSet}" : mimeType;
 
             // respond
             response.Close();
         }
 
-        /// <summary>Reponds with some dynamic HTML</summary>
+        /// <summary>Reponds with some dynamic HTML inserted into a simple HTML block</summary>
         /// <param name="response"></param>
         /// <param name="message"></param>
-        protected void ServeSimpleHTML( HttpListenerResponse response, string message )
+        protected void ServeSimpleHTML( HttpListenerResponse response, string body )
         {
-            if ( String.IsNullOrWhiteSpace( message ) )
-                message = "&nbsp;";
+            string msg = FormatHTMLPage( body );
+            byte[] msgBytes = UTF8Encoding.UTF8.GetBytes( msg );
 
             response.StatusCode = 200;
-            string msg = $"<!DOCTYPE html><html><head></head><body><div>{message}</div></body></html>";
-            byte[] msgBytes = UTF8Encoding.UTF8.GetBytes( msg );
             response.ContentLength64 = msgBytes.Length;
             response.OutputStream.Write( msgBytes, 0, msgBytes.Length );
 
@@ -315,6 +303,26 @@ namespace Raydreams.MiniServer
             response.ContentLength64 = 0;
             response.Close();
         }
+
+        /// <summary>Replaces the title and body in the HTML template</summary>
+        /// <param name="title"></param>
+        /// <param name="body"></param>
+        public static string FormatHTMLPage(string body, string title = null)
+        {
+            if ( String.IsNullOrWhiteSpace( body ) )
+                body = "&nbsp;";
+
+            string html = SimpleHTMLTemplate.Replace( "$BODY$", body.Trim() );
+
+            if( !String.IsNullOrWhiteSpace( title ) )
+                html = html.Replace( "$TITLE$", title );
+
+            return html;
+        }
+
+        /// <summary>Gets the version of THIS assembly</summary>
+        /// <returns></returns>
+        public static string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         /// <summary>Add a logger here later</summary>
         /// <param name="msg"></param>

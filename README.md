@@ -68,3 +68,10 @@ http://localhost:50001/token?code=XYZpdq123
 By adding a custom route to `/token`, when OAuth redirects after a user logins to their account on the Identity Management site, they will be sent back to Mini Server where you can intercept the response and extract the token or code and store it locally. Of course, Mini Server needs to be running before they log in, but you can shut it down as soon everything returns.
 
 Add an event to your own subclass your main code will listen to.
+
+
+## Not Implemented
+
+* HTTPS - there's no support for HTTPS.
+* Javascript - .js files are not supported
+* Multiple Request - Only one request can be handled at a time. Other incoming requests are blocked until processing requests are complete.
