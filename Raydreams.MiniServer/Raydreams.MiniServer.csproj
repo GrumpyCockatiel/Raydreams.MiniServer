@@ -18,6 +18,7 @@
     <Copyright>© TAG Digital Studios</Copyright>
     <PackageProjectUrl>https://github.com/GrumpyCockatiel/Raydreams.MiniServer</PackageProjectUrl>
     <PackageTags>webserver oauth http</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
