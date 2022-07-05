@@ -84,3 +84,4 @@ Add an event to your own subclass your main code will listen to.
 * Multiple Requests - Only one request can be handled at a time. Other incoming requests are blocked until processing requests are complete.
 * Binding to custom domains.
 * Logging - better logger interface coming soon.
+* File Parsing - there's no real plan to parse physical files as that sort of defeats the purpose of a light weight web server, but never say never.
