@@ -19,12 +19,16 @@
     <PackageProjectUrl>https://github.com/GrumpyCockatiel/Raydreams.MiniServer</PackageProjectUrl>
     <PackageTags>webserver oauth http</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIconUrl>https://www.raydreams.com/images/logo.png</PackageIconUrl>
+    <PackageIcon>package-icon.png</PackageIcon>
   </PropertyGroup>
-
-  <ItemGroup>
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+    <None Include="Resources\package-icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
 </Project>
