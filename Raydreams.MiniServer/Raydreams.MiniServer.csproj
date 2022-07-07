@@ -16,7 +16,7 @@
     <RepositoryUrl>https://github.com/GrumpyCockatiel/Raydreams.MiniServer</RepositoryUrl>
     <RespositoryType>git</RespositoryType>
     <Copyright>© TAG Digital Studios</Copyright>
-    <PackageProjectUrl>https://github.com/GrumpyCockatiel/Raydreams.MiniServer</PackageProjectUrl>
+    <PackageProjectUrl>https://www.raydreams.com/</PackageProjectUrl>
     <PackageTags>webserver oauth http</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>package-icon.png</PackageIcon>
