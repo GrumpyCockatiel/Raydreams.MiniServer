@@ -42,17 +42,14 @@ namespace Raydreams.MiniServer
             // because some people still use port 3000
             this.Port = Math.Clamp(port, 1024, 65535 );
 
-            // built in special routes
+            // built in special routes but can be replaced
             this.SpecialRoutes = new Dictionary<string, Action<HttpListenerContext>>()
             {
                 // signature of the server
                 { "/sig", this.ServeSignature },
 
                 // a test page uses the format /test?echo=message
-                { "/test", this.ServeTest },
-
-                // get any favicon since many clients will search for it
-                { "/favicon.ico", this.ServeFavicon }
+                { "/test", this.ServeTest }
             };
         }
 
@@ -61,7 +58,7 @@ namespace Raydreams.MiniServer
         #region [ Properties ]
 
         /// <summary>Collection of custom routes</summary>
-        protected Dictionary<string, Action<HttpListenerContext>> SpecialRoutes;
+        private Dictionary<string, Action<HttpListenerContext>> SpecialRoutes;
 
         /// <summary>The physical root web server file path</summary>
         public DirectoryInfo RootFolder { get; set; }
@@ -93,6 +90,8 @@ namespace Raydreams.MiniServer
         /// <summary>Allows for adding a new special route at run time</summary>
         /// <param name="route">The custom route which optionally is prefxied with forward slash. Routes need to be case insensitive.</param>
         /// <param name="callback">The callback function when this route is called</param>
+        /// <returns>True if added, otherwise false</returns>
+        /// <remarks>You can replace existing routes by adding it again.</remarks>
         public bool AddSpecialRoute( string route, Action<HttpListenerContext> callback )
         {
             if ( String.IsNullOrWhiteSpace( route ) || callback == null )
@@ -103,10 +102,11 @@ namespace Raydreams.MiniServer
             if ( route[0] != '/' )
                 route = $"/{route}";
 
+            // special routes can be replaced at runtime
             if ( this.SpecialRoutes.ContainsKey( route ) )
-                return false;
-
-            this.SpecialRoutes.Add( route, callback );
+                this.SpecialRoutes[route] = callback;
+            else
+                this.SpecialRoutes.Add( route, callback );
 
             return true;
         }
@@ -146,14 +146,18 @@ namespace Raydreams.MiniServer
                         this.Shutdown();
                         continue;
                     }
-                    // test for special routes next
+                    // favicon route can not be changed
+                    else if ( specialRoute == "/favicon.ico" )
+                    {
+                        this.ServeFavicon( context );
+                    }
+                    // special routes have next precedence
                     else if ( this.SpecialRoutes.ContainsKey( specialRoute ) )
                     {
                         this.LogIt( $"Request for special route {specialRoute}" );
                         this.SpecialRoutes[specialRoute]( context );
-                        continue;
                     }
-                    // finally serve a physical HTML page
+                    // finally serve any physical HTML page
                     else if ( this.EnablePageServe )
                     {
                         // test the local path is the home path
@@ -163,7 +167,6 @@ namespace Raydreams.MiniServer
                         path = ( !String.IsNullOrWhiteSpace( path ) ) ? Path.Combine( this.RootFolder.FullName, path ) : Path.Combine( this.RootFolder.FullName, HomePage );
 
                         this.ServeWebFile( context.Response, path );
-                        continue;
                     }
                     else // return 404
                     {
@@ -254,8 +257,8 @@ namespace Raydreams.MiniServer
             {
                 string md = File.ReadAllText( fi.FullName );
                 string body = this.ConvertMarkdown( md );
-
-                buffer = UTF8Encoding.UTF8.GetBytes( FormatHTMLPage( body, Path.GetFileNameWithoutExtension( fi.Name ) ) );
+                body = SimpleHTMLTemplate.FormatHTMLTemplate( body, Path.GetFileNameWithoutExtension( fi.Name ) );
+                buffer = UTF8Encoding.UTF8.GetBytes( body );
             }
             else
             {
@@ -288,7 +291,7 @@ namespace Raydreams.MiniServer
         /// <param name="message"></param>
         protected void ServeSimpleHTML( HttpListenerResponse response, string body )
         {
-            string msg = FormatHTMLPage( body, ServerName );
+            string msg = SimpleHTMLTemplate.FormatHTMLTemplate( body, ServerName );
             byte[] msgBytes = UTF8Encoding.UTF8.GetBytes( msg );
 
             response.StatusCode = 200;
@@ -333,22 +336,6 @@ namespace Raydreams.MiniServer
             response.KeepAlive = false;
             response.ContentLength64 = 0;
             response.Close();
-        }
-
-        /// <summary>Replaces the title and body in the HTML template</summary>
-        /// <param name="title"></param>
-        /// <param name="body"></param>
-        public static string FormatHTMLPage(string body, string title = null)
-        {
-            if ( String.IsNullOrWhiteSpace( body ) )
-                body = "&nbsp;";
-
-            string html = SimpleHTMLTemplate.Replace( "$BODY$", body.Trim() );
-
-            if( !String.IsNullOrWhiteSpace( title ) )
-                html = html.Replace( "$TITLE$", title );
-
-            return html;
         }
 
         /// <summary>Gets the version of THIS assembly</summary>

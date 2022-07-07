@@ -37,7 +37,8 @@ namespace Raydreams.MiniServer
         public MoreServer( int port, string rootPath ) : base(port, rootPath)
         {
             // add more custom routes here
-            this.SpecialRoutes.Add( "/json", ServeJSONExample );
+            this.AddSpecialRoute( "/json", ServeJSONExample );
+            this.AddSpecialRoute( "/token", ServeToken );
         }
 
         /// <summary>Example on how to add custom routes</summary>
@@ -50,6 +51,22 @@ namespace Raydreams.MiniServer
 
             // echo the Proxy JSON response to the browser window - not really necessary to work
             base.ServeJSON( ctx.Response, JsonConvert.SerializeObject( jsonObj ) );
+        }
+
+        /// <summary>Example callback from OAuth with an access token</summary>
+        /// <param name="ctx"></param>
+        protected void ServeToken( HttpListenerContext ctx )
+        {
+            // get the access token from the code param
+            string? code = ctx.Request.QueryString.Get( "code" );
+
+            if ( String.IsNullOrWhiteSpace( code ) )
+                code = "no code";
+
+            // add a event callback to your own code here to set the access token in your app
+
+            // send something to the browser window so they know it worked
+            this.ServeSimpleHTML( ctx.Response, $"<p>Your Access Token Is</p><p>{code}</p>" );
         }
 
         /// <summary>Customize how to log</summary>
@@ -82,4 +99,5 @@ namespace Raydreams.MiniServer
             return Markdown.ToHtml( md, this.MarkdownEngine );
         }
     }
+
 }
