@@ -15,13 +15,15 @@ For now it only handles custom routes, HTML files, Javascript, CSS, JSON, and ba
 
 You can add in Markdown support (demo included) to serve Markdown as HTML using something like **Markdig**.
 
-# What It's Not (for now)
-
-While you can serve physical files as a stand alone exe, that's not really the use case and MiniServer is primarily 
-
 ## nuget
 
 You can download the [nuget package](https://www.nuget.org/packages/raydreams.miniserver/) from nuget.org
+
+# What It's Not (for now)
+
+While you can serve physical files as a stand alone exe, that's not really the use case and MiniServer is primarily to run a web server inside an existing app that listens for localhost requests.
+
+Another approach is launching the web browser from your app and then scraping the resulting redirect. Depending on your framework version this can be less than trivial.
 
 ## HOW TO
 
@@ -50,7 +52,7 @@ public class MiniMeServer : MiniServer
 
 Then you can add your own special routes to handle custom localhost path's useful for something like an OAuth redirect.
 
-You can supply any method to handle conversion from Markdown to HTML using the delegate property
+You can supply your own Markdown Converter to handle conversion from Markdown to HTML using the delegate property if say you want to server Markdown files as Help.
 
 ```
 public delegate string MarkdownToHTML( string md );
@@ -75,10 +77,9 @@ So how is this useful with OAuth? Well, An OAuth client has a callback URL which
 http://localhost:50001/token?code=XYZpdq123
 ```
 
-By adding a custom route to `/token`, when OAuth redirects after a user logins to their account on the Identity Management site, they will be sent back to Mini Server where you can intercept the response and extract the token or code and store it locally. Of course, Mini Server needs to be running before they log in, but you can shut it down as soon everything returns.
+By adding a custom route to `/token`, when OAuth redirects after a user logins to their account on the Identity Management site, they will be sent back to MiniServer where you can intercept the response and extract the token or code and store it locally. Of course, Mini Server needs to be running before they log in, but you can shut it down as soon everything returns.
 
 Add an event to your own subclass your main code will listen to.
-
 
 ## Not Implemented
 
