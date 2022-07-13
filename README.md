@@ -15,6 +15,10 @@ For now it only handles custom routes, HTML files, Javascript, CSS, JSON, and ba
 
 You can add in Markdown support (demo included) to serve Markdown as HTML using something like **Markdig**.
 
+# What It's Not (for now)
+
+While you can serve physical files as a stand alone exe, that's not really the use case and MiniServer is primarily 
+
 ## nuget
 
 You can download the [nuget package](https://www.nuget.org/packages/raydreams.miniserver/) from nuget.org
