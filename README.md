@@ -11,7 +11,7 @@ It only supports a single web site hosted in some local folder.
 
 You can subclass it to add custom route handlers for specific callback URLs as shown in this example.
 
-For now it only handles custom routes, HTML files, CSS, JSON, and basic images.
+For now it only handles custom routes, HTML files, Javascript, CSS, JSON, and basic images.
 
 You can add in Markdown support (demo included) to serve Markdown as HTML using something like **Markdig**.
 
@@ -29,7 +29,7 @@ public class MiniMeServer : MiniServer
     public MiniMeServer( int port, string rootPath ) : base(port, rootPath)
     {
         // add more custom routes here
-        this.SpecialRoutes.Add( "/json", ServeJSONExample );
+        this.AddSpecialRoute( "/json", ServeJSONExample );
     }
 
     /// <summary>Example on how to add custom routes</summary>
@@ -37,11 +37,10 @@ public class MiniMeServer : MiniServer
     {
         var jsonObj = new { Timestamp = DateTimeOffset.UtcNow, Message = "My Special Object" };
 
-        // add a event callback to your own code here that this happened
+        // add a event callback to your own code here when this happens
 
         base.ServeJSON( ctx.Response, JsonConvert.SerializeObject( jsonObj ) );
     }
-
 }
 ```
 
@@ -80,7 +79,6 @@ Add an event to your own subclass your main code will listen to.
 ## Not Implemented
 
 * HTTPS - there's no support for HTTPS.
-* Javascript - .js files are not YET supported
 * Multiple Requests - Only one request can be handled at a time. Other incoming requests are blocked until processing requests are complete.
 * Binding to custom domains.
 * Logging - better logger interface coming soon.

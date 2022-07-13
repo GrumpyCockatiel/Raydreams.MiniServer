@@ -12,7 +12,9 @@ namespace Raydreams.MiniServer
     /// <summary>Portable mini web server</summary>
     public class MiniServer
     {
-        /// <summary></summary>
+        #region [ Fields ]
+
+        /// <summary>The server name</summary>
         public static readonly string ServerName = "Raydreams MiniServer";
 
         /// <summary>Default page to return when no file is specified on the root path</summary>
@@ -26,6 +28,8 @@ namespace Raydreams.MiniServer
 
         /// <summary>When flipped to true, this server will end</summary>
         private bool _shutdown = false;
+
+        #endregion [ Fields ]
 
         #region [ Constructors ]
 
