@@ -19,7 +19,9 @@ namespace Raydreams.MiniServer
         /// <summary>Test the mime type is of type text</summary>
         /// <param name="mimeType"></param>
         /// <returns></returns>
-        public static bool IsText( string mimeType ) => mimeType.StartsWith( "text", StringComparison.OrdinalIgnoreCase );
+        public static bool IsText( string mimeType ) => mimeType.StartsWith( "text", StringComparison.OrdinalIgnoreCase )
+            || mimeType.Equals( GetMimeType( ".json" ), StringComparison.OrdinalIgnoreCase )
+            || mimeType.Equals( GetMimeType( ".xml" ), StringComparison.OrdinalIgnoreCase );
 
         /// <summary>Simple test the file type is supported</summary>
         /// <param name="ext">The file extension optionally prefixed with a .</param>
@@ -63,18 +65,21 @@ namespace Raydreams.MiniServer
             // dictionary built to lookup using ignore case
             return new Dictionary<string, string>( StringComparer.OrdinalIgnoreCase )
             {
+                {".css", "text/css"},
+                {".csv", "text/csv" },
                 {".htm", "text/html"},
                 {".html", "text/html"},
-                {".css", "text/css"},
-                {".md", "text/html"}, // markdown files are converted to HTML
-                {".markdown", "text/html"}, // markdown files are converted to HTML
-                {".json", "text/json"},
-                {".js", "text/javascript" },
-                {".png", "image/png" },
                 {".gif", "image/gif" },
+                {".ico", "image/x-icon"},
                 {".jpg", "image/jpg" },
                 {".jpeg","image/jpg" },
-                {".ico", "image/x-icon"}
+                {".js", "text/javascript" },
+                {".json", "application/json"},
+                {".md", "text/html"}, // markdown files are converted to HTML
+                {".markdown", "text/html"}, // markdown files are converted to HTML
+                {".png", "image/png" },
+                {".txt", "text/plain" },
+                {".xml", "application/xml" },
             };
         }
     }

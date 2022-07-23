@@ -9,6 +9,16 @@ using System.Reflection;
 
 namespace Raydreams.MiniServer
 {
+    /// <summary></summary>
+    public interface IWebServer
+    {
+        Task<int> Serve();
+
+        bool AddSpecialRoute( string route, Action<HttpListenerContext> callback );
+
+        void Shutdown();
+    }
+
     /// <summary>Portable mini web server</summary>
     public class MiniServer
     {
@@ -68,7 +78,7 @@ namespace Raydreams.MiniServer
         public DirectoryInfo RootFolder { get; set; }
 
         /// <summary>When set to false, no physical pages can ever be served - only special paths</summary>
-        public bool EnablePageServe { get; set; } = true;
+        public bool EnableFileServe { get; set; } = true;
 
         /// <summary>port to listen on</summary>
         public int Port { get; set; } = 50005;
@@ -82,6 +92,14 @@ namespace Raydreams.MiniServer
         public Func<string, string> ConvertMarkdown { get; set; } = ( string md ) => "<h1>Markdown not supported!</h1>";
 
         #endregion [ Properties ]
+
+        #region [ Events ]
+
+        /// <summary>A log event raised when logs happen in the format {this object, log message, log level}</summary>
+        /// <remarks>For now the only sent log levels are Info and Error.</remarks>
+        public event Action<object, string, string> OnLog;
+
+        #endregion [ Events ]
 
         #region [ Public Methods ]
 
@@ -130,7 +148,7 @@ namespace Raydreams.MiniServer
             // start listening
             server.Start();
 
-            this.LogIt( $"Dr. Frasier Crane here... I'm Listening at {server.Prefixes.First()}" );
+            this.LogMessage( $"Dr. Frasier Crane here... I'm Listening at {server.Prefixes.First()}" );
 
             // endless loop until force quit for now
             while ( this.IsRunning )
@@ -146,7 +164,7 @@ namespace Raydreams.MiniServer
                     // always check shutdown first - nothing can override it
                     if ( specialRoute == "/shutdown" )
                     {
-                        this.LogIt( $"Received shutdown command... Shutting down..." );
+                        this.LogMessage( $"Received shutdown command... Shutting down..." );
                         this.Shutdown();
                         continue;
                     }
@@ -158,11 +176,11 @@ namespace Raydreams.MiniServer
                     // special routes have next precedence
                     else if ( this.SpecialRoutes.ContainsKey( specialRoute ) )
                     {
-                        this.LogIt( $"Request for special route {specialRoute}" );
+                        this.LogMessage( $"Request for special route {specialRoute}" );
                         this.SpecialRoutes[specialRoute]( context );
                     }
-                    // finally serve any physical HTML page
-                    else if ( this.EnablePageServe )
+                    // finally serve any physical HTML page if allowed
+                    else if ( this.EnableFileServe )
                     {
                         // test the local path is the home path
                         string path = context.Request.Url.LocalPath.Trim().TrimStart( new char[] { '/' } );
@@ -174,13 +192,13 @@ namespace Raydreams.MiniServer
                     }
                     else // return 404
                     {
-                        this.LogIt( $"An unknown or invalid request of '{context.Request.RawUrl}'." );
+                        this.LogError( $"An unknown or invalid request of '{context.Request.RawUrl}'." );
                         this.ServeError( context.Response, 404 );
                     }
                 }
                 catch (System.Exception exp)
                 {
-                    this.LogIt( exp.Message );
+                    this.LogError( exp.ToLogMsg(true) );
                     this.ServeError( context.Response, 500 );
                 }
             }
@@ -224,7 +242,7 @@ namespace Raydreams.MiniServer
 
             if ( ico == null || ico.Length < 1 )
             {
-                this.LogIt( $"Asking for the favicon but there isn't one." );
+                this.LogError( $"Asking for the favicon but there isn't one." );
                 this.ServeError( response, 404 );
                 return;
             }
@@ -246,12 +264,12 @@ namespace Raydreams.MiniServer
             // validate or return 404
             if ( !fi.Exists || !MimeTypeMap.Supported( fi.Extension ) )
             {
-                this.LogIt( $"File {fi.Name} not found" );
+                this.LogError( $"File {fi.Name} not found" );
                 this.ServeError(response, 404);
                 return;
             }
 
-            this.LogIt( $"Request for {fi.FullName}" );
+            this.LogMessage( $"Request for {fi.FullName}" );
 
             // hold the results
             byte[] buffer = null;
@@ -334,7 +352,7 @@ namespace Raydreams.MiniServer
 
         /// <summary>Serve up an error code - usually 404 or 500</summary>
         /// <param name="response"></param>
-        protected void ServeError( HttpListenerResponse response, int errorCode )
+        protected virtual void ServeError( HttpListenerResponse response, int errorCode )
         {
             response.StatusCode = errorCode;
             response.KeepAlive = false;
@@ -346,14 +364,32 @@ namespace Raydreams.MiniServer
         /// <returns>The vesion as a string</returns>
         public static string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-        /// <summary>Add a log event here later</summary>
+        #endregion [ Methods ]
+
+        #region [ Logging ]
+
+        /// <summary>Log an Info Message</summary>
         /// <param name="msg"></param>
-        protected virtual void LogIt( string msg )
+        protected virtual void LogMessage( string msg )
         {
             if ( String.IsNullOrWhiteSpace( msg ) )
                 return;
+
+            if ( this.OnLog != null )
+                this.OnLog( this, msg, "Info" );
         }
 
-        #endregion [ Methods ]
+        /// <summary>Log an Error Message</summary>
+        /// <param name="msg"></param>
+        protected virtual void LogError( string msg )
+        {
+            if ( String.IsNullOrWhiteSpace( msg ) )
+                return;
+
+            if ( this.OnLog != null )
+                this.OnLog( this, msg, "Error" );
+        }
+
+        #endregion [ Logging ]
     }
 }

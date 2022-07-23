@@ -10,9 +10,9 @@ namespace Raydreams.MiniServer
 	public static class StringExtensions
 	{
 		/// <summary>Replace a token in the format {{TOKEN_NAME}} where the token name is all uppercase</summary>
-		/// <param name="template"></param>
+		/// <param name="template">The template string with tokens in the aforementioned format</param>
 		/// <param name="token">the token ID string which will be upper cased automatically</param>
-		/// <param name="value"></param>
+		/// <param name="value">The value to replace with</param>
 		/// <returns>The newly formatted string</returns>
 		/// <remarks>Dont use with string interpolation to avoid confusion</remarks>
 		public static string ReplaceToken( this string template, string token, string value )
@@ -53,7 +53,7 @@ namespace Raydreams.MiniServer
 			if ( str.Length > length )
 				return ( trim ) ? str.Trim().Substring( 0, length ) : str.Substring( 0, length );
 
-			return ( trim ) ? str.Trim() : str;
+			return trim ? str.Trim() : str;
 		}
 	}
 }

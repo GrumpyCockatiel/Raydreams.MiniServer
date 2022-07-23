@@ -24,10 +24,22 @@ namespace Raydreams.MiniServer
             MoreServer server = new MoreServer( 50001, Path.Combine( ServerPath, ServerFolder ) )
             { ConvertMarkdown = new Markdigdowner().GetHtml };
 
+            // you can override the log methods OR capture the events with you own logger
+            server.OnLog += DoLog;
+
             // explicit start of the server and block
             await server.Serve();
 
             return 0;
+        }
+
+        /// <summary>Capture log events</summary>
+        /// <param name="sender">sender</param>
+        /// <param name="message">log message</param>
+        /// <param name="level">standard log level</param>
+        protected static void DoLog(object sender, string message, string level)
+        {
+            Console.WriteLine( message );
         }
     }
 
@@ -67,15 +79,6 @@ namespace Raydreams.MiniServer
 
             // send something to the browser window so they know it worked
             this.ServeSimpleHTML( ctx.Response, $"<p>Your Access Token Is</p><p>{code}</p>" );
-        }
-
-        /// <summary>Customize how to log</summary>
-        /// <param name="msg"></param>
-        protected override void LogIt( string msg )
-        {
-            base.LogIt( msg );
-
-            Console.WriteLine( msg );
         }
     }
 

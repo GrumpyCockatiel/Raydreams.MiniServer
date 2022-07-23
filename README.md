@@ -1,17 +1,18 @@
 # C# Mini Web Server
 
-Make your own little C# .NET Core web server. This is useful when you need to spawn an in-app server to listen to redirects on localhost.
+Make your own little C# .NET Core web server. This is useful when you need to spawn an in-app server to listen for redirects to localhost.
 
 The primary use cases are:
 
-* intercepting redirects from an OAuth Callback
-* serving your own custom files like custom encrypted files
+* Intercepting redirects from an OAuth Callback
+* Serving up Help in the user's web browser inside the app
+* Serving your own custom files like custom encrypted files
 
 It only supports a single web site hosted in some local folder.
 
 You can subclass it to add custom route handlers for specific callback URLs as shown in this example.
 
-For now it only handles custom routes, HTML files, Javascript, CSS, JSON, and basic images.
+For now it only handles custom routes, HTML files, Javascript, CSS, JSON, XML, txt, csv and basic images.
 
 You can add in Markdown support (demo included) to serve Markdown as HTML using something like **Markdig**.
 
@@ -61,6 +62,12 @@ MiniMeServer server = new MiniMeServer( 50001, Path.Combine( WebRoot, WebFolder 
     { ConvertMarkdown = new Markdigdowner().GetHtml };
 ```
 
+For Secruity reasons you can disable serving any physical files with `EnableFileServe = false`
+
+# Logging
+
+To capture logs either override the Log methods in the base class and/or attach a log event to DoLog(object, string, string).
+
 # Testing
 
 Run the server and browse to `http://localhost:50001/test?echo=hello%20world`
@@ -85,6 +92,5 @@ Add an event to your own subclass your main code will listen to.
 
 * HTTPS - there's no support for HTTPS.
 * Multiple Requests - Only one request can be handled at a time. Other incoming requests are blocked until processing requests are complete.
-* Binding to custom domains.
-* Logging - better logger interface coming soon.
-* File Parsing - there's no real plan to parse physical files as that sort of defeats the purpose of a light weight web server, but never say never.
+* Binding to custom domains - You can't bind a custom domain yet.
+* File Parsing - there's no real plan to parse physical files as that sort of defeats the purpose of a light weight web server, but never say never. Maybe simple parsing in the header or something?
