@@ -60,7 +60,12 @@ public delegate string MarkdownToHTML( string md );
 
 MiniMeServer server = new MiniMeServer( 50001, Path.Combine( WebRoot, WebFolder ) )
     { ConvertMarkdown = new Markdigdowner().GetHtml };
+
+// explicit start of the server
+await server.Serve();
 ```
+
+Don't forget to block on the `Serve` call from the calling method - otherwise you will never catch any requests.
 
 For Secruity reasons you can disable serving any physical files with `EnableFileServe = false`
 
