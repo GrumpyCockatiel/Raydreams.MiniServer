@@ -29,6 +29,8 @@ Global
 		SolutionGuid = {224D3116-F821-4B61-899E-02F76504F340}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		version = 1.0.0.0
+		version = 1.0.1.0
+		Policies = $0
+		$0.StandardHeader = $1
 	EndGlobalSection
 EndGlobal

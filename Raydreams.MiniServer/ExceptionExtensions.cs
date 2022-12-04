@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace Raydreams.MiniServer
+namespace Raydreams.Web
 {
 	/// <summary>Extensions to System.Exception</summary>
 	public static class ExceptionExtensions

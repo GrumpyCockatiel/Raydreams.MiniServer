@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Raydreams.MiniServer
+namespace Raydreams.Web
 {
     /// <summary>Maps extensions to Mime Types</summary>
     public static class MimeTypeMap

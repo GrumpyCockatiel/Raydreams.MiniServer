@@ -4,8 +4,9 @@ using System.Net;
 using System.Threading.Tasks;
 using Markdig;
 using Newtonsoft.Json;
+using Raydreams.Web;
 
-namespace Raydreams.MiniServer
+namespace Raydreams.Web.CLI
 {
     /// <summary>The mini server itself</summary>
     public class Program

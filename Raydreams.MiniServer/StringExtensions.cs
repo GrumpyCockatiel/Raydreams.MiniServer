@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Raydreams.MiniServer
+namespace Raydreams.Web
 {
 	/// <summary>String utility extensions</summary>
 	public static class StringExtensions

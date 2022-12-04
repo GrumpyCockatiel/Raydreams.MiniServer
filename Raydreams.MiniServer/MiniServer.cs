@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Reflection;
 
-namespace Raydreams.MiniServer
+namespace Raydreams.Web
 {
     /// <summary></summary>
     public interface IWebServer
@@ -237,6 +237,9 @@ namespace Raydreams.MiniServer
         protected void ServeFavicon( HttpListenerContext ctx )
         {
             var response = ctx.Response;
+
+            if (!this.RootFolder.Exists)
+                return;
 
             byte[] ico = File.ReadAllBytes( Path.Combine( this.RootFolder.FullName, "favicon.ico" ) );
 
