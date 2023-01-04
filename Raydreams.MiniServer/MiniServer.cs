@@ -34,7 +34,7 @@ namespace Raydreams.Web
         public static readonly string DefaultCharSet = "charset=utf-8";
 
         /// <summary>Serves as a very simple HTML template with only Title and Body replacement tokens</summary>
-        public static readonly string SimpleHTMLTemplate = @"<!DOCTYPE html><html lang=""en""><head><meta charset=""utf-8"" /><title>$TITLE$</title></head><body></body>$BODY$</html>";
+        public static readonly string SimpleHTMLTemplate = @"<!DOCTYPE html><html lang=""en""><head><meta charset=""utf-8"" /><title>$TITLE$</title></head><body>$BODY$</body></html>";
 
         /// <summary>When flipped to true, this server will end</summary>
         private bool _shutdown = false;
